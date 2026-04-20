@@ -1,0 +1,214 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+pythonenv*
+
+# Django
+*.log
+*.pot
+*.pyc
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static_collected/
+static/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+.env.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.idea/
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Database
+*.db
+*.sqlite3
+*.sql
+
+# Media and uploads
+media/
+uploads/
+uploaded_media/
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+*.temp
+
+# Logs
+logs/
+*.log
+debug.log
+error.log
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.coverage.*
+*.cover
+*.py,cover
+.hypothesis/
+test-reports/
+nosetests.xml
+coverage.xml
+
+# Package management
+pip-log.txt
+pip-delete-this-directory.txt
+pip-selfcheck.json
+dist/
+build/
+*.egg-info/
+*.egg
+MANIFEST
+requirements.txt.local
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytype
+.pytype/
+
+# Profiling data
+*.prof
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+*.pid
+
+# Docker
+.docker/
+docker-compose.override.yml
+*.tar.gz
+*.tar
+
+# Redis
+dump.rdb
+
+# Sentry
+.sentry/
+
+# Vite / Webpack / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+dist/
+*.css.map
+*.js.map
+
+# AWS
+.aws/
+
+# Google Cloud
+.google_cloud/
+
+# Secrets and keys
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+private/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Translations
+*.mo
+*.po~
+
+# Django storages
+static-s3/
+media-s3/
+
+# Pycharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+.idea/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+.directory
+*.directory
+
+# Project specific
+.cache/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+debug/
+tmp/
+temp/
