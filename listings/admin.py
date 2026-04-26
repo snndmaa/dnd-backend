@@ -5,9 +5,9 @@ from .models import Property
 
 @admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'city', 'side', 'property_type', 'order_number')
-    list_filter = ('city', 'side', 'property_type')
-    search_fields = ('name', 'description')
+    list_display = ('name', 'city', 'side', 'type', 'order_number')
+    list_filter = ('city', 'side', 'type', 'owner_name')
+    search_fields = ('name', 'description', 'owner_name')
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'city', 'side', 'description', 'order_number')
@@ -16,7 +16,7 @@ class PropertyAdmin(admin.ModelAdmin):
             'fields': ('rate_per_day', 'rate_per_month')
         }),
         ('Property Details', {
-            'fields': ('property_type', 'gps_lat', 'gps_lng', 'property_address', 'property_country', 'property_languages', 'checkin_date', 'checkout_date', 'min_stay', 'max_stay', 'bedrooms')
+            'fields': ('type', 'gps_lat', 'gps_lng', 'address', 'country', 'languages', 'checkin_date', 'checkout_date', 'min_stay', 'max_stay', 'bedrooms', 'owner_name')
         }),
         ('Amenities', {
             'fields': ('ac', 'internet', 'hot_water', 'parking', 'pool', 'roof_access', 'balcony', 'washing_machine')
@@ -25,11 +25,11 @@ class PropertyAdmin(admin.ModelAdmin):
             'fields': ('whatsapp',)
         }),
         ('Images', {
-            'fields': ('image_1', 'image_2', 'image_3', 'image_4', 'image_5', 'image_6', 'image_7', 'image_8', 'image_9', 'image_10'),
+            'fields': ('main_photo', 'living_room_photo', 'bedroom_photo', 'vc_photo', 'building_photo', 'land_photo'),
             'classes': ('collapse',)
         }),
         ('Videos', {
-            'fields': ('video_1'),
+            'fields': ('video',),
             'classes': ('collapse',)
         }),
     )

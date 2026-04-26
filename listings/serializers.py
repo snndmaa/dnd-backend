@@ -41,7 +41,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     propertyDescription = serializers.CharField(source='description')
     propertyRateShortTerm = serializers.SerializerMethodField()
     propertyRateLongTerm = serializers.SerializerMethodField()
-    propertyType = serializers.CharField(source='property_type')
+    propertyType = serializers.CharField(source='type')
     propertyGPS = serializers.SerializerMethodField()
     propertyBedrooms = serializers.IntegerField(source='bedrooms')
     propertyAC = serializers.SerializerMethodField()
@@ -58,9 +58,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     propertyMinStay = serializers.IntegerField(source='min_stay')
     propertyMaxStay = serializers.IntegerField(source='max_stay')
     propertyImages = serializers.SerializerMethodField()
-    propertyVideos = serializers.SerializerMethodField()
-    propertyAvailability = serializers.SerializerMethodField()
-    contactStatus = serializers.SerializerMethodField()
+    propertyVideo = serializers.URLField(source='video', allow_blank=True)
     contactUrl = serializers.SerializerMethodField()
 
     class Meta:
@@ -71,7 +69,6 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'propertyCity',
             'propertySide',
             'propertyDescription',
-            'propertyAvailability',
             'propertyRateShortTerm',
             'propertyRateLongTerm',
             'propertyType',
@@ -91,8 +88,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'propertyMinStay',
             'propertyMaxStay',
             'propertyImages',
-            'propertyVideos',
-            'contactStatus',
+            'propertyVideo',
             'contactUrl',
         ]
 
@@ -106,9 +102,6 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
         if obj.gps_lat is None or obj.gps_lng is None:
             return ''
         return f'{obj.gps_lat},{obj.gps_lng}'
-
-    def get_propertyAvailability(self, obj):
-        return [availability.month_year for availability in obj.availabilities.all()]
 
     def _boolean_text(self, value):
         return 'yes' if value else 'no'
@@ -137,39 +130,83 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     def get_propertyWashingMachine(self, obj):
         return self._boolean_text(obj.washing_machine)
 
-    def get_contactStatus(self, obj):
-        user = self.context.get('request').user
-        if not user or not user.is_authenticated or not user.is_active:
-            return 'login_required'
-        return 'whatsapp' if user.is_premium else 'payment_required'
+    # def get_contactStatus(self, obj):
+    #     user = self.context.get('request').user
+    #     if not user or not user.is_authenticated or not user.is_active:
+    #         return 'login_required'
+    #     return 'whatsapp' if user.is_premium else 'payment_required'
 
     def get_contactUrl(self, obj):
-        user = self.context.get('request').user
-        if not user or not user.is_authenticated or not user.is_premium:
-            return None
+        # user = self.context.get('request').user
+        # if not user or not user.is_authenticated or not user.is_premium:
+        #     return None
         number = ''.join(ch for ch in obj.whatsapp if ch.isdigit())
         return f'https://wa.me/{number}' if number else None
 
     def get_propertyImages(self, obj):
-        images = []
-        for i in range(1, 11):
-            image_field = getattr(obj, f'image_{i}')
-            if image_field:
-                images.append({
-                    'id': i,
-                    'url': image_field.url,
-                    'name': image_field.name.split('/')[-1]
-                })
+        """Return organized images by category"""
+        images = {
+            'main': None,
+            'living_room': None,
+            'bedroom': None,
+            'vc': None,
+            'building': None,
+            'land': None,
+            'all_images': []  # For backward compatibility or easy access
+        }
+        
+        # Main photo
+        if obj.main_photo:
+            images['main'] = {
+                'category': 'main',
+                'url': obj.main_photo.url,
+                'name': obj.main_photo.name.split('/')[-1] if obj.main_photo.name else None
+            }
+            images['all_images'].append(images['main'])
+        
+        # Living room photo
+        if obj.living_room_photo:
+            images['living_room'] = {
+                'category': 'living_room',
+                'url': obj.living_room_photo.url,
+                'name': obj.living_room_photo.name.split('/')[-1] if obj.living_room_photo.name else None
+            }
+            images['all_images'].append(images['living_room'])
+        
+        # Bedroom photo
+        if obj.bedroom_photo:
+            images['bedroom'] = {
+                'category': 'bedroom',
+                'url': obj.bedroom_photo.url,
+                'name': obj.bedroom_photo.name.split('/')[-1] if obj.bedroom_photo.name else None
+            }
+            images['all_images'].append(images['bedroom'])
+        
+        # VC (Virtual Conference?) photo
+        if obj.vc_photo:
+            images['vc'] = {
+                'category': 'vc',
+                'url': obj.vc_photo.url,
+                'name': obj.vc_photo.name.split('/')[-1] if obj.vc_photo.name else None
+            }
+            images['all_images'].append(images['vc'])
+        
+        # Building photo
+        if obj.building_photo:
+            images['building'] = {
+                'category': 'building',
+                'url': obj.building_photo.url,
+                'name': obj.building_photo.name.split('/')[-1] if obj.building_photo.name else None
+            }
+            images['all_images'].append(images['building'])
+        
+        # Land photo
+        if obj.land_photo:
+            images['land'] = {
+                'category': 'land',
+                'url': obj.land_photo.url,
+                'name': obj.land_photo.name.split('/')[-1] if obj.land_photo.name else None
+            }
+            images['all_images'].append(images['land'])
+        
         return images
-
-    def get_propertyVideos(self, obj):
-        videos = []
-        for i in range(1, 4):
-            video_field = getattr(obj, f'video_{i}')
-            if video_field:
-                videos.append({
-                    'id': i,
-                    'url': video_field.url,
-                    'name': video_field.name.split('/')[-1]
-                })
-        return videos

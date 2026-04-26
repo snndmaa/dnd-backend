@@ -25,18 +25,19 @@ PROPERTY_TYPE_CHOICES = [
 
 class Property(models.Model):
     name = models.CharField(max_length=255)
+    type = models.CharField(max_length=20, choices=PROPERTY_TYPE_CHOICES)
     city = models.CharField(max_length=32, choices=CITY_CHOICES)
     side = models.CharField(max_length=16, choices=SIDE_CHOICES)
     description = models.TextField(blank=True)
     order_number = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
     rate_per_day = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     rate_per_month = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    property_type = models.CharField(max_length=20, choices=PROPERTY_TYPE_CHOICES)
     gps_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     gps_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    property_address = models.CharField(max_length=255, blank=True)
-    property_country = models.CharField(max_length=100, blank=True)
-    property_languages = models.CharField(max_length=255, blank=True, help_text='Comma-separated list of languages')
+    address = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    languages = models.CharField(max_length=255, blank=True, help_text='Comma-separated list of languages')
+    owner_name = models.CharField(max_length=255, blank=True)
     
     checkin_date = models.DateField(null=True, blank=True)
     checkout_date = models.DateField(null=True, blank=True)
@@ -57,23 +58,14 @@ class Property(models.Model):
     bbq_facility=models.BooleanField(default=False)
 
     # Media fields
-    image_1 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_2 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_3 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_4 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_5 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_6 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_7 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_8 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_9 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
-    image_10 = models.ImageField(upload_to='properties/images/', blank=True, null=True)
+    main_photo = models.ImageField(upload_to='properties/images/main/', blank=True, null=True)
+    living_room_photo = models.ImageField(upload_to='properties/images/living_room/', blank=True, null=True)
+    bedroom_photo = models.ImageField(upload_to='properties/images/bedroom/', blank=True, null=True)
+    vc_photo = models.ImageField(upload_to='properties/images/vc/', blank=True, null=True)
+    building_photo = models.ImageField(upload_to='properties/images/building/', blank=True, null=True)
+    land_photo = models.ImageField(upload_to='properties/images/land/', blank=True, null=True)
 
-    video_1 = models.FileField(
-        upload_to='properties/videos/',
-        blank=True,
-        null=True,
-        validators=[FileExtensionValidator(allowed_extensions=['mp4', 'avi', 'mov', 'mkv'])]
-    )
+    video = models.URLField(blank=True, max_length=500)
 
     class Meta:
         ordering = ['order_number']
