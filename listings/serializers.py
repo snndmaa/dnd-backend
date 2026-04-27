@@ -5,25 +5,33 @@ from .models import Property
 
 class PropertyListSerializer(serializers.ModelSerializer):
     PropertyName = serializers.CharField(source='name')
-    PropertyCity = serializers.CharField(source='city')
+    PropertyAddress = serializers.CharField(source='address')
+    propertyType = serializers.CharField(source='type')
+    propertyBedrooms = serializers.IntegerField(source='bedrooms')
+    propertyAC = serializers.BooleanField(source='ac')
     PropertyRate = serializers.SerializerMethodField()
     PropertyRatePerDay = serializers.DecimalField(source='rate_per_day', max_digits=10, decimal_places=2)
     PropertyRatePerMonth = serializers.DecimalField(source='rate_per_month', max_digits=10, decimal_places=2)
-    PropertySide = serializers.CharField(source='side')
-
+    # PropertySide = serializers.CharField(source='side')
     PropertyOrderNumber = serializers.IntegerField(source='order_number')
+    PropertyMainPhoto = serializers.ImageField(source='main_photo', allow_null=True)
 
     class Meta:
         model = Property
         fields = [
             'id',
             'PropertyName',
-            'PropertyCity',
-            'PropertySide',
+            'PropertyAddress',
+            'propertyType',
+            'propertyBedrooms',
+            'propertyAC',
+            # 'PropertySide',
             'PropertyRatePerDay',
             'PropertyRatePerMonth',
             'PropertyRate',
             'PropertyOrderNumber',
+            'PropertyMainPhoto',
+
         ]
 
     def get_PropertyRate(self, obj):
@@ -33,18 +41,26 @@ class PropertyListSerializer(serializers.ModelSerializer):
         return f'${obj.rate_per_day}/day' if obj.has_short_term else 'N/A'
 
 
+from rest_framework import serializers
+from django.conf import settings
+
 class PropertyDetailSerializer(serializers.ModelSerializer):
     propertyID = serializers.IntegerField(source='id')
     propertyName = serializers.CharField(source='name')
     propertyCity = serializers.CharField(source='city')
     propertySide = serializers.CharField(source='side')
     propertyDescription = serializers.CharField(source='description')
+    propertyAddress = serializers.CharField(source='address')
     propertyRateShortTerm = serializers.SerializerMethodField()
     propertyRateLongTerm = serializers.SerializerMethodField()
     propertyType = serializers.CharField(source='type')
     propertyGPS = serializers.SerializerMethodField()
     propertyBedrooms = serializers.IntegerField(source='bedrooms')
+    propertyLanguages = serializers.CharField(source='languages')
     propertyAC = serializers.SerializerMethodField()
+    propertyTV = serializers.SerializerMethodField()
+    propertyMicrowave = serializers.SerializerMethodField()
+    propertyBBQFacility = serializers.SerializerMethodField()
     propertyInternet = serializers.SerializerMethodField()
     propertyHotWater = serializers.SerializerMethodField()
     propertyParking = serializers.SerializerMethodField()
@@ -53,12 +69,14 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     propertyBalcony = serializers.SerializerMethodField()
     propertyWashingMachine = serializers.SerializerMethodField()
     propertyWhatsapp = serializers.CharField(source='whatsapp')
-    propertyCheckinDate = serializers.DateField(source='checkin_date', allow_null=True)
-    propertyCheckoutDate = serializers.DateField(source='checkout_date', allow_null=True)
     propertyMinStay = serializers.IntegerField(source='min_stay')
+    propertyBookedDates = serializers.SerializerMethodField()
+    propertyBlockedDates = serializers.SerializerMethodField()
     propertyMaxStay = serializers.IntegerField(source='max_stay')
     propertyImages = serializers.SerializerMethodField()
     propertyVideo = serializers.URLField(source='video', allow_blank=True)
+    propertyOwnerName = serializers.CharField(source='owner_name', allow_blank=True)
+    propertyOwnerPhoto = serializers.SerializerMethodField()  # Changed to method for absolute URL
     contactUrl = serializers.SerializerMethodField()
 
     class Meta:
@@ -69,12 +87,17 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'propertyCity',
             'propertySide',
             'propertyDescription',
+            'propertyAddress',
             'propertyRateShortTerm',
             'propertyRateLongTerm',
             'propertyType',
             'propertyGPS',
             'propertyBedrooms',
+            'propertyLanguages',
             'propertyAC',
+            'propertyTV',
+            'propertyMicrowave',
+            'propertyBBQFacility',
             'propertyInternet',
             'propertyHotWater',
             'propertyParking',
@@ -83,14 +106,24 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'propertyBalcony',
             'propertyWashingMachine',
             'propertyWhatsapp',
-            'propertyCheckinDate',
-            'propertyCheckoutDate',
             'propertyMinStay',
             'propertyMaxStay',
+            'propertyBookedDates',
+            'propertyBlockedDates',
             'propertyImages',
             'propertyVideo',
+            'propertyOwnerName',
+            'propertyOwnerPhoto',
             'contactUrl',
         ]
+
+    def get_full_url(self, request, path):
+        """Helper method to get full absolute URL"""
+        if not path:
+            return None
+        if request:
+            return request.build_absolute_uri(path)
+        return path
 
     def get_propertyRateShortTerm(self, obj):
         return f'${obj.rate_per_day}/day' if obj.has_short_term else 'N/A'
@@ -108,6 +141,15 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
 
     def get_propertyAC(self, obj):
         return self._boolean_text(obj.ac)
+
+    def get_propertyTV(self, obj):
+        return self._boolean_text(obj.tv)
+
+    def get_propertyMicrowave(self, obj):
+        return self._boolean_text(obj.microwave)
+
+    def get_propertyBBQFacility(self, obj):
+        return self._boolean_text(obj.bbq_facility)
 
     def get_propertyInternet(self, obj):
         return self._boolean_text(obj.internet)
@@ -130,21 +172,29 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     def get_propertyWashingMachine(self, obj):
         return self._boolean_text(obj.washing_machine)
 
-    # def get_contactStatus(self, obj):
-    #     user = self.context.get('request').user
-    #     if not user or not user.is_authenticated or not user.is_active:
-    #         return 'login_required'
-    #     return 'whatsapp' if user.is_premium else 'payment_required'
+    def get_propertyBookedDates(self, obj):
+        """Get all booked dates for the property"""
+        return list(obj.get_booked_dates())
+
+    def get_propertyBlockedDates(self, obj):
+        """Get all blocked dates for the property"""
+        return list(obj.get_blocked_dates())
 
     def get_contactUrl(self, obj):
-        # user = self.context.get('request').user
-        # if not user or not user.is_authenticated or not user.is_premium:
-        #     return None
         number = ''.join(ch for ch in obj.whatsapp if ch.isdigit())
         return f'https://wa.me/{number}' if number else None
 
+    def get_propertyOwnerPhoto(self, obj):
+        """Return full URL for owner photo"""
+        if obj.owner_photo:
+            request = self.context.get('request')
+            return self.get_full_url(request, obj.owner_photo.url)
+        return None
+
     def get_propertyImages(self, obj):
-        """Return organized images by category"""
+        """Return organized images by category with full absolute URLs"""
+        request = self.context.get('request')
+        
         images = {
             'main': None,
             'living_room': None,
@@ -155,58 +205,25 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'all_images': []  # For backward compatibility or easy access
         }
         
-        # Main photo
-        if obj.main_photo:
-            images['main'] = {
-                'category': 'main',
-                'url': obj.main_photo.url,
-                'name': obj.main_photo.name.split('/')[-1] if obj.main_photo.name else None
-            }
-            images['all_images'].append(images['main'])
+        # Helper to add image with full URL
+        def add_image(category, image_field):
+            if image_field:
+                full_url = self.get_full_url(request, image_field.url)
+                if full_url:
+                    image_data = {
+                        'category': category,
+                        'url': full_url,  # Now returns full absolute URL
+                        'name': image_field.name.split('/')[-1] if image_field.name else None
+                    }
+                    images[category] = image_data
+                    images['all_images'].append(image_data)
         
-        # Living room photo
-        if obj.living_room_photo:
-            images['living_room'] = {
-                'category': 'living_room',
-                'url': obj.living_room_photo.url,
-                'name': obj.living_room_photo.name.split('/')[-1] if obj.living_room_photo.name else None
-            }
-            images['all_images'].append(images['living_room'])
-        
-        # Bedroom photo
-        if obj.bedroom_photo:
-            images['bedroom'] = {
-                'category': 'bedroom',
-                'url': obj.bedroom_photo.url,
-                'name': obj.bedroom_photo.name.split('/')[-1] if obj.bedroom_photo.name else None
-            }
-            images['all_images'].append(images['bedroom'])
-        
-        # VC (Virtual Conference?) photo
-        if obj.vc_photo:
-            images['vc'] = {
-                'category': 'vc',
-                'url': obj.vc_photo.url,
-                'name': obj.vc_photo.name.split('/')[-1] if obj.vc_photo.name else None
-            }
-            images['all_images'].append(images['vc'])
-        
-        # Building photo
-        if obj.building_photo:
-            images['building'] = {
-                'category': 'building',
-                'url': obj.building_photo.url,
-                'name': obj.building_photo.name.split('/')[-1] if obj.building_photo.name else None
-            }
-            images['all_images'].append(images['building'])
-        
-        # Land photo
-        if obj.land_photo:
-            images['land'] = {
-                'category': 'land',
-                'url': obj.land_photo.url,
-                'name': obj.land_photo.name.split('/')[-1] if obj.land_photo.name else None
-            }
-            images['all_images'].append(images['land'])
+        # Add all images
+        add_image('main', obj.main_photo)
+        add_image('living_room', obj.living_room_photo)
+        add_image('bedroom', obj.bedroom_photo)
+        add_image('vc', obj.vc_photo)
+        add_image('building', obj.building_photo)
+        add_image('land', obj.land_photo)
         
         return images

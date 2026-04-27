@@ -1,12 +1,62 @@
+from datetime import timedelta
+
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 CITY_CHOICES = [
-    ('All in Mauritius', 'All in Mauritius'),
+    ('GrandBaie', 'Grand Baie'),
+    ('Cap Malheureux', 'Cap Malheureux'),
+    ('Pereybere', 'Pereybere'),
+    ('Trou aux Biches', 'Trou aux Biches'),
+    ('Mont Choisy', 'Mont Choisy'),
+    ('Pointe aux Piments', 'Pointe aux Piments'),
+    ('Goodlands', 'Goodlands'),
+    ('Calodyne', 'Calodyne'),
+    
+    # West Region
     ('Flic En Flac', 'Flic En Flac'),
-    ('GrandBaie', 'GrandBaie'),
     ('Tamarin', 'Tamarin'),
+    ('Black River', 'Black River (Rivière Noire)'),
+    ('La Gaulette', 'La Gaulette'),
+    ('Le Morne', 'Le Morne'),
+    ('Wolmar', 'Wolmar'),
+    ('Cascavelle', 'Cascavelle'),
+    
+    # East Region
+    ('Belle Mare', 'Belle Mare'),
+    ('Trou d\'Eau Douce', 'Trou d\'Eau Douce'),
+    ('Palmar', 'Palmar'),
+    ('Flacq', 'Centre de Flacq'),
+    ('Poste Lafayette', 'Poste Lafayette'),
+    ('Quatre Cocos', 'Quatre Cocos'),
+    
+    # South Region
+    ('Blue Bay', 'Blue Bay'),
+    ('Mahebourg', 'Mahébourg'),
+    ('Bel Ombre', 'Bel Ombre'),
+    ('Souillac', 'Souillac'),
+    ('Riambel', 'Riambel'),
+    ('Pointe d\'Esny', 'Pointe d\'Esny'),
+    
+    # Center/Plains
+    ('Curepipe', 'Curepipe'),
+    ('Quatre Bornes', 'Quatre Bornes'),
+    ('Vacoas', 'Vacoas-Phoenix'),
+    ('Phoenix', 'Phoenix'),
+    ('Beau Bassin', 'Beau Bassin-Rose Hill'),
+    ('Rose Hill', 'Rose Hill'),
+    ('Moka', 'Moka'),
+    ('Reduit', 'Réduit'),
+    
+    # Other popular areas
+    ('Port Louis', 'Port Louis (Capital)'),
+    ('Pamplemousses', 'Pamplemousses'),
+    ('Plaine Magnien', 'Plaine Magnien (Airport area)'),
+    ('Quartier Militaire', 'Quartier Militaire'),
+    ('Saint Pierre', 'Saint Pierre'),
 ]
 
 SIDE_CHOICES = [
@@ -38,9 +88,8 @@ class Property(models.Model):
     country = models.CharField(max_length=100, blank=True)
     languages = models.CharField(max_length=255, blank=True, help_text='Comma-separated list of languages')
     owner_name = models.CharField(max_length=255, blank=True)
+    owner_photo = models.ImageField(upload_to='owners/photos/', blank=True, null=True)
     
-    checkin_date = models.DateField(null=True, blank=True)
-    checkout_date = models.DateField(null=True, blank=True)
     min_stay = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)], help_text='Minimum nights stay')
     max_stay = models.PositiveIntegerField(default=30, validators=[MinValueValidator(1)], help_text='Maximum nights stay')
     bedrooms = models.PositiveIntegerField(default=0)
@@ -80,3 +129,115 @@ class Property(models.Model):
     @property
     def has_long_term(self):
         return self.rate_per_month > 0
+
+    def is_available(self, start_date, end_date):
+        """Check if property is available for given date range"""
+        from django.db.models import Q
+        # Check for overlapping bookings
+        overlapping_bookings = self.bookings.filter(
+            Q(check_in__lt=end_date, check_out__gt=start_date)
+        ).exclude(status='cancelled')
+        if overlapping_bookings.exists():
+            return False
+        # Check for blocked dates
+        blocked_overlap = self.blocked_dates.filter(
+            Q(start_date__lt=end_date, end_date__gt=start_date)
+        )
+        return not blocked_overlap.exists()
+
+    def get_booked_dates(self):
+        """Get all booked dates for this property as date strings"""
+        booked_dates = set()
+        for booking in self.bookings.exclude(status='cancelled'):
+            current = booking.check_in
+            while current <= booking.check_out:
+                booked_dates.add(current.strftime('%Y-%m-%d'))
+                current += timedelta(days=1)
+        return booked_dates
+
+    def get_blocked_dates(self):
+        """Get all blocked dates for this property as date strings"""
+        blocked_dates = set()
+        for blocked in self.blocked_dates.all():
+            current = blocked.start_date
+            while current <= blocked.end_date:
+                blocked_dates.add(current.strftime('%Y-%m-%d'))
+                current += timedelta(days=1)
+        return blocked_dates
+
+
+class Booking(models.Model):
+    """Individual booking for a property"""
+    BOOKING_STATUS = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+        ('completed', 'Completed'),
+    ]
+
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name='bookings'
+    )
+    customer_name = models.CharField(max_length=255)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=20)
+
+    check_in = models.DateField()
+    check_out = models.DateField()
+    guests = models.PositiveIntegerField(default=1)
+
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=BOOKING_STATUS, default='pending')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['check_in']
+        indexes = [
+            models.Index(fields=['property', 'check_in', 'check_out']),
+        ]
+
+    def __str__(self):
+        return f"{self.property.name} - {self.check_in} to {self.check_out}"
+
+    def clean(self):
+        """Validate booking dates"""
+        if self.check_in >= self.check_out:
+            raise ValidationError("Check-out must be after check-in")
+
+        # Check min/max stay
+        stay_duration = (self.check_out - self.check_in).days
+        if stay_duration < self.property.min_stay:
+            raise ValidationError(f"Minimum stay is {self.property.min_stay} nights")
+        if stay_duration > self.property.max_stay:
+            raise ValidationError(f"Maximum stay is {self.property.max_stay} nights")
+
+        # Check availability (skip for cancelled bookings)
+        if self.status != 'cancelled' and self.pk is None:
+            if not self.property.is_available(self.check_in, self.check_out):
+                raise ValidationError("Property is not available for these dates")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+
+class BlockedDate(models.Model):
+    """Manually block dates when property is unavailable (maintenance, etc.)"""
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name='blocked_dates'
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+    reason = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['start_date']
+
+    def __str__(self):
+        return f"{self.property.name} blocked: {self.start_date} to {self.end_date}"
