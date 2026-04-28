@@ -110,7 +110,7 @@ class Property(models.Model):
     main_photo = models.ImageField(upload_to='properties/images/main/', blank=True, null=True)
     living_room_photo = models.ImageField(upload_to='properties/images/living_room/', blank=True, null=True)
     bedroom_photo = models.ImageField(upload_to='properties/images/bedroom/', blank=True, null=True)
-    vc_photo = models.ImageField(upload_to='properties/images/vc/', blank=True, null=True)
+    # vc_photo = models.ImageField(upload_to='properties/images/vc/', blank=True, null=True)
     building_photo = models.ImageField(upload_to='properties/images/building/', blank=True, null=True)
     land_photo = models.ImageField(upload_to='properties/images/land/', blank=True, null=True)
 

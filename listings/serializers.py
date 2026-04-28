@@ -199,7 +199,6 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'main': None,
             'living_room': None,
             'bedroom': None,
-            'vc': None,
             'building': None,
             'land': None,
             'all_images': []  # For backward compatibility or easy access
@@ -222,7 +221,6 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
         add_image('main', obj.main_photo)
         add_image('living_room', obj.living_room_photo)
         add_image('bedroom', obj.bedroom_photo)
-        add_image('vc', obj.vc_photo)
         add_image('building', obj.building_photo)
         add_image('land', obj.land_photo)
         

@@ -25,7 +25,7 @@ class PropertyAdmin(admin.ModelAdmin):
             'fields': ('whatsapp',)
         }),
         ('Images', {
-            'fields': ('main_photo', 'living_room_photo', 'bedroom_photo', 'vc_photo', 'building_photo', 'land_photo'),
+            'fields': ('main_photo', 'living_room_photo', 'bedroom_photo', 'building_photo', 'land_photo'),
             'classes': ('collapse',)
         }),
         ('Videos', {

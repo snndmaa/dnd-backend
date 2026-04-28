@@ -157,7 +157,6 @@ def create_colored_placeholder(category, width=1200, height=800):
         'main_photo': (52, 152, 219),
         'living_room_photo': (46, 204, 113),
         'bedroom_photo': (155, 89, 182),
-        'vc_photo': (241, 196, 15),
         'building_photo': (230, 126, 34),
         'land_photo': (39, 174, 96),
     }
@@ -486,8 +485,7 @@ def create_properties(count=20, include_images=True, include_owner_photos=True, 
             bedroom_photo = download_placeholder_image('bedroom_photo')
             property_obj.bedroom_photo.save(f"bedroom_{name.replace(' ', '_')}.jpg", bedroom_photo, save=False)
             
-            vc_photo = download_placeholder_image('vc_photo')
-            property_obj.vc_photo.save(f"vc_{name.replace(' ', '_')}.jpg", vc_photo, save=False)
+            # vc_photo removed - line deleted
             
             building_photo = download_placeholder_image('building_photo')
             property_obj.building_photo.save(f"building_{name.replace(' ', '_')}.jpg", building_photo, save=False)
@@ -576,8 +574,7 @@ def clear_all_properties():
                     prop.living_room_photo.delete(save=False)
                 if prop.bedroom_photo:
                     prop.bedroom_photo.delete(save=False)
-                if prop.vc_photo:
-                    prop.vc_photo.delete(save=False)
+                # vc_photo removed from deletion
                 if prop.building_photo:
                     prop.building_photo.delete(save=False)
                 if prop.land_photo:
